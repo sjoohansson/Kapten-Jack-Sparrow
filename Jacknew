@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Black Pearl: AI Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pirata+One&family=Special+Elite&display=swap');
+        
+        :root {
+            --p-gold: #d4af37;
+            --p-brown: #3e2723;
+            --p-paper: #f4e4bc;
+        }
+
+        body {
+            background: #05161a;
+            color: var(--p-paper);
+            font-family: 'Special Elite', cursive;
+            overflow: hidden;
+            height: 100vh;
+            user-select: none;
+            margin: 0;
+        }
+
+        h1, h2, #start-overlay h2 { font-family: 'Pirata One', cursive; }
+
+        .parchment {
+            background-color: var(--p-paper);
+            background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
+            color: #2c1e11;
+            border: 12px solid transparent;
+            border-image: url("https://www.transparenttextures.com/patterns/dark-leather.png") 30 round;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        .ocean {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(transparent, #004d61);
+            z-index: 5;
+        }
+
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background: repeat-x url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,52.38,57.13,28.67,118,34.61,181.1,23.9,64.6-10.95,124.1-42,188.7-41.2,65.2.8,126.9,32.5,191.2,40.4V0Z" fill="%23002b36"/></svg>');
+            animation: waveFlow 10s linear infinite;
+        }
+
+        @keyframes waveFlow {
+            from { transform: translateX(0); }
+            to { transform: translateX(-1200px); }
+        }
+
+        .ship {
+            position: fixed;
+            bottom: 120px;
+            left: 5vw;
+            font-size: 100px;
+            z-index: 10;
+            transition: left 2s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 10px 5px rgba(0,0,0,0.5));
+            cursor: pointer;
+        }
+
+        .sway { animation: swayAnim 4s infinite ease-in-out; }
+        @keyframes swayAnim {
+            0%, 100% { transform: rotate(-5deg) translateY(0); }
+            50% { transform: rotate(5deg) translateY(-15px); }
+        }
+
+        .floaty {
+            position: fixed;
+            z-index: 15;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .floaty:hover { transform: scale(1.3) rotate(10deg); }
+
+        #start-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .btn-gold {
+            background: var(--p-gold);
+            color: var(--p-brown);
+            padding: 1.5rem 3rem;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            border: 4px solid var(--p-brown);
+            cursor: pointer;
+            box-shadow: 0 0 25px var(--p-gold);
+            transition: all 0.2s;
+        }
+        .btn-gold:hover { transform: scale(1.05); box-shadow: 0 0 40px var(--p-gold); }
+
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-10px, 5px); }
+            40% { transform: translate(10px, -5px); }
+            60% { transform: translate(-10px, -5px); }
+            80% { transform: translate(10px, 5px); }
+        }
+
+        /* AI Parrot Styling */
+        #parrot-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .parrot-bubble {
+            background: white;
+            color: black;
+            padding: 12px;
+            border-radius: 15px;
+            border: 2px solid #3e2723;
+            max-width: 220px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: none;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            line-height: 1.4;
+        }
+        .parrot-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center">
+
+    <!-- AI Papegoja -->
+    <div id="parrot-container">
+        <div id="parrot-speech" class="parrot-bubble">Krrra! Vill du ha en ledtråd från en vis fågel?</div>
+        <div class="text-7xl cursor-pointer hover:scale-110 transition-transform filter drop-shadow-lg" onclick="askParrot()">🦜</div>
+        <button onclick="askParrot()" class="mt-2 bg-amber-600 text-white text-[11px] px-3 py-1.5 rounded-full border-2 border-amber-900 shadow-lg font-bold uppercase tracking-wider">✨ Fråga Papegojan</button>
+    </div>
+
+    <!-- Startskärm -->
+    <div id="start-overlay">
+        <div class="mb-10 px-4">
+            <span class="text-9xl block mb-6 animate-bounce">🏴‍☠️</span>
+            <h2 class="text-7xl text-white uppercase tracking-widest mb-4">The Black Pearl AI</h2>
+            <p class="text-xl text-amber-200">Klicka för att aktivera ljud, effekter och den magiska papegojan!</p>
+        </div>
+        <button onclick="startGame()" class="btn-gold">⚔️ STARTA ÄVENTYRET ⚔️</button>
+    </div>
+
+    <!-- Interaktiva bakgrundsobjekt -->
+    <div id="objects-layer">
+        <div class="floaty text-5xl" style="top: 10%; left: 15%;" onclick="makeThunder(this)">☁️</div>
+        <div class="floaty text-5xl" style="top: 15%; left: 75%;" onclick="makeThunder(this)">☁️</div>
+        <div class="floaty text-6xl" style="bottom: 60px; left: 25%;" onclick="clickObject('Du bärgade en tunna med guld! 💰')">📦</div>
+        <div class="floaty text-6xl" style="bottom: 40px; left: 70%;" onclick="clickObject('En haj simmar förbi! 🦈')">🦈</div>
+    </div>
+
+    <div class="ocean">
+        <div class="wave"></div>
+        <div class="wave" style="bottom: -10px; opacity: 0.6; animation-duration: 6s;"></div>
+    </div>
+
+    <!-- Skeppet -->
+    <div id="main-ship" class="ship sway" onclick="clickShip()">🚢</div>
+
+    <!-- Spelpanelen -->
+    <div id="game-panel" class="parchment max-w-lg w-full p-8 relative z-20 m-4 hidden">
+        <div class="text-center mb-6">
+            <div id="skull" class="text-7xl mb-2 drop-shadow-md">💀</div>
+            <h1 class="text-4xl uppercase text-amber-900 mb-2">Kaptenens Prövning</h1>
+            <div class="mt-4 bg-amber-900/20 h-4 rounded-full overflow-hidden border-2 border-amber-900/30 shadow-inner">
+                <div id="progress" class="bg-gradient-to-r from-amber-600 to-yellow-400 h-full w-0 transition-all duration-1000"></div>
+            </div>
+            <p id="stats" class="text-xs font-black mt-3 uppercase tracking-widest text-amber-800">Guld: 0 | Plats: Tortuga</p>
+        </div>
+
+        <div id="quiz-box" class="min-h-[250px]">
+            <p id="story" class="text-center italic text-lg mb-6 font-bold text-amber-950 px-2"></p>
+            
+            <div id="options-area" class="space-y-5">
+                <div class="bg-black/5 p-4 rounded-xl border border-amber-900/20 shadow-sm">
+                    <p id="q1-title" class="text-xs font-bold mb-3 uppercase text-amber-800 tracking-tighter"></p>
+                    <div id="q1-btns" class="grid grid-cols-2 gap-3"></div>
+                </div>
+                <div class="bg-black/5 p-4 rounded-xl border border-amber-900/20 shadow-sm">
+                    <p id="q2-title" class="text-xs font-bold mb-3 uppercase text-amber-800 tracking-tighter"></p>
+                    <div id="q2-btns" class="grid grid-cols-1 gap-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="feedback" class="h-8 text-center mt-6 text-sm font-black uppercase tracking-tight"></div>
+
+        <button id="action-btn" class="w-full bg-amber-950 text-amber-100 py-4 rounded-2xl mt-6 font-bold uppercase text-xl shadow-xl border-b-8 border-black active:border-b-2 active:translate-y-1 transition-all">
+            Kasta Loss
+        </button>
+    </div>
+
+    <script>
+        const apiKey = ""; // Provided by environment
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playBeep(freq, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sounds = {
+            correct: () => {
+                playBeep(523, 'triangle', 0.15);
+                setTimeout(() => playBeep(659, 'triangle', 0.15), 100);
+                setTimeout(() => playBeep(783, 'triangle', 0.3), 200);
+            },
+            wrong: () => playBeep(130, 'sawtooth', 0.6),
+            click: () => playBeep(900, 'sine', 0.05),
+            thunder: () => playBeep(55, 'sawtooth', 1.2)
+        };
+
+        const challenges = [
+            { 
+                loc: "Tortuga", 
+                s: "Välkommen ombord! Vilket ord är ett verb i meningen: 'Piraten hittar guld'?", 
+                q1: "Hitta verbet:", 
+                o1: ["Piraten", "hittar", "guld"], 
+                a1: "hittar", 
+                q2: "Synonym till ordet 'snabb':", 
+                o2: ["Långsam 🐢", "Kvick ⚡", "Stark 💪"], 
+                a2: 1 
+            },
+            { 
+                loc: "Döda Havet", 
+                s: "Skeppet knakar! Vilket av dessa ord är ett adjektiv?", 
+                q1: "Hitta adjektivet:", 
+                o1: ["Det", "stora", "ankaret"], 
+                a1: "stora", 
+                q2: "Motsatsen till 'mörker':", 
+                o2: ["Natt 🌑", "Ljus ☀️", "Kyla ❄️"], 
+                a2: 1 
+            },
+            { 
+                loc: "Isla de Muerta", 
+                s: "Hitta substantivet! Utan det kan vi inte segla.", 
+                q1: "Substantiv:", 
+                o1: ["Seglar", "Skepp", "Blå"], 
+                a1: "Skepp", 
+                q2: "En 'kajuta' är:", 
+                o2: ["Ett rum på skeppet 🛖", "En sorts mat 🍖", "Ett vapen ⚔️"], 
+                a2: 0 
+            }
+        ];
+
+        let cur = 0, score = 0, s1 = null, s2 = null, parrotBusy = false;
+
+        function startGame() {
+            audioCtx.resume();
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('game-panel').style.display = 'block';
+            loadLevel();
+        }
+
+        function loadLevel() {
+            if(cur >= challenges.length) { 
+                generateVictoryMessage(); 
+                return; 
+            }
+            const d = challenges[cur];
+            document.getElementById('skull').innerText = "💀";
+            document.getElementById('story').innerText = d.s;
+            document.getElementById('stats').innerText = `Guld: ${score} | Plats: ${d.loc}`;
+            document.getElementById('progress').style.width = (cur/challenges.length*100) + "%";
+            document.getElementById('action-btn').innerText = "Kontrollera Svar";
+            document.getElementById('feedback').innerText = "";
+            s1 = null; s2 = null;
+
+            renderBtns('q1-btns', d.o1, (v)=>s1=v);
+            renderBtns('q2-btns', d.o2, (v,i)=>s2=i);
+        }
+
+        function renderBtns(id, opts, cb) {
+            const el = document.getElementById(id); el.innerHTML = '';
+            opts.forEach((o, i) => {
+                const b = document.createElement('button');
+                b.innerText = o; b.className = "bg-white/80 p-3 rounded-xl border-2 border-amber-900/30 font-bold hover:bg-amber-100 transition-all shadow-sm text-amber-950";
+                b.onclick = () => { 
+                    sounds.click(); 
+                    Array.from(el.children).forEach(x=>x.classList.remove('bg-amber-900','text-white','border-black')); 
+                    b.classList.add('bg-amber-900','text-white','border-black'); 
+                    cb(o,i); 
+                };
+                el.appendChild(b);
+            });
+        }
+
+        // --- GEMINI AI INTEGRATION ---
+        async function askParrot() {
+            if (parrotBusy) return;
+            parrotBusy = true;
+            const bubble = document.getElementById('parrot-speech');
+            bubble.innerText = "Krrra! Funderar... ✨";
+            bubble.style.display = "block";
+
+            const d = challenges[cur];
+            const prompt = `Frågan är: "${d.s}". Ge en rolig pirat-ledtråd på svenska som hjälper en elev att förstå grammatiken eller begreppet utan att säga svaret direkt.`;
+            const systemPrompt = "Du är en klok och rolig piratpapegoja som älskar svenska språket. Börja alltid med 'Krrra!' och använd piratuttryck. Var pedagogisk.";
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+                const data = await response.json();
+                bubble.innerText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Krrra! Jag tappade rösten!";
+            } catch (e) {
+                bubble.innerText = "Krrra! Storm på linjen! (Kunde inte nå AI)";
+            } finally {
+                parrotBusy = false;
+                setTimeout(() => { if(!parrotBusy) bubble.style.display = "none"; }, 12000);
+            }
+        }
+
+        async function generateVictoryMessage() {
+            const container = document.getElementById('quiz-box');
+            container.innerHTML = "<p class='text-center animate-pulse text-amber-900 mt-10'>✨ Kaptenen skriver ett hyllningsbrev...</p>";
+            
+            const prompt = `Eleven har klarat äventyret med ${score} poäng. Skriv ett kort, heroiskt och uppmuntrande meddelande på pirat-svenska som hyllar deras kunskaper i svenska.`;
+            
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                const msg = data.candidates?.[0]?.content?.parts?.[0]?.text || "Du är en sann hjälte av de sju haven!";
+                container.innerHTML = `<div class='text-center py-6'><h2 class='text-4xl text-amber-900 mb-4'>SEGERRR! 🏆</h2><p class='italic leading-relaxed'>${msg}</p></div>`;
+            } catch (e) {
+                container.innerHTML = "<div class='text-center py-6'><h2 class='text-4xl text-amber-900 mb-4'>SEGERRR! 🏆</h2><p>Du är en sann språkhjälte!</p></div>";
+            }
+            
+            document.getElementById('skull').innerText = "💰";
+            document.getElementById('action-btn').innerText = "SPELA IGEN";
+            document.getElementById('action-btn').onclick = () => location.reload();
+        }
+
+        // --- GAME LOGIC ---
+        document.getElementById('action-btn').onclick = function() {
+            if(this.innerText === "NÄSTA Ö 🌊") { cur++; loadLevel(); moveShip(); return; }
+            if(s1 === null || s2 === null) {
+                document.getElementById('feedback').innerText = "Svara på frågorna först! ⚓";
+                document.getElementById('feedback').style.color = "red";
+                return;
+            }
+
+            const d = challenges[cur];
+            if(s1 === d.a1 && s2 === d.a2) {
+                sounds.correct(); score += 20;
+                document.getElementById('feedback').innerText = "Helt rätt! Vi sätter segel!";
+                document.getElementById('feedback').style.color = "darkgreen";
+                document.getElementById('skull').innerText = "😎";
+                this.innerText = "NÄSTA Ö 🌊";
+            } else {
+                sounds.wrong();
+                document.getElementById('feedback').innerText = "Fel svar! Kanonerna dundrar!";
+                document.getElementById('feedback').style.color = "darkred";
+                document.getElementById('skull').innerText = "😠";
+                document.getElementById('game-panel').classList.add('shake');
+                setTimeout(()=>document.getElementById('game-panel').classList.remove('shake'), 500);
+            }
+        };
+
+        function moveShip() { 
+            const ship = document.getElementById('main-ship');
+            ship.style.left = (5 + (cur * 25)) + "vw"; 
+        }
+        
+        function makeThunder(el) { 
+            sounds.thunder(); 
+            const f = document.createElement('div');
+            f.className = "fixed inset-0 bg-white z-[100] opacity-50";
+            document.body.appendChild(f);
+            setTimeout(()=>f.remove(), 60);
+        }
+
+        function clickObject(m) { 
+            sounds.click(); 
+            score += 5; 
+            document.getElementById('feedback').innerText = m;
+            document.getElementById('feedback').style.color = "black";
+            document.getElementById('stats').innerText = `Guld: ${score} | Plats: ${challenges[cur]?.loc || 'Målet'}`;
+        }
+
+        function clickShip() { 
+            sounds.click(); 
+            const b = document.createElement('div');
+            b.innerText = "Skepp ohoj!";
+            b.className = "fixed bg-white border-2 border-black p-2 rounded-xl font-bold z-[100] text-sm";
+            b.style.bottom = "230px";
+            b.style.left = document.getElementById('main-ship').style.left;
+            document.body.appendChild(b);
+            setTimeout(()=>b.remove(), 1000);
+        }
+    </script>
+</body>
+</html>
