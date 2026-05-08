@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Black Pearl: AI Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pirata+One&family=Special+Elite&display=swap');
+        
+        :root {
+            --p-gold: #d4af37;
+            --p-brown: #3e2723;
+            --p-paper: #f4e4bc;
+        }
+
+        body {
+            background: #05161a;
+            color: var(--p-paper);
+            font-family: 'Special Elite', cursive;
+            overflow: hidden;
+            height: 100vh;
+            user-select: none;
+            margin: 0;
+        }
+
+        h1, h2, #start-overlay h2 { font-family: 'Pirata One', cursive; }
+
+        .parchment {
+            background-color: var(--p-paper);
+            background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
+            color: #2c1e11;
+            border: 12px solid transparent;
+            border-image: url("https://www.transparenttextures.com/patterns/dark-leather.png") 30 round;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        .ocean {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(transparent, #004d61);
+            z-index: 5;
+        }
+
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background: repeat-x url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,52.38,57.13,28.67,118,34.61,181.1,23.9,64.6-10.95,124.1-42,188.7-41.2,65.2.8,126.9,32.5,191.2,40.4V0Z" fill="%23002b36"/></svg>');
+            animation: waveFlow 10s linear infinite;
+        }
+
+        @keyframes waveFlow {
+            from { transform: translateX(0); }
+            to { transform: translateX(-1200px); }
+        }
+
+        .ship {
+            position: fixed;
+            bottom: 120px;
+            left: 5vw;
+            font-size: 100px;
+            z-index: 10;
+            transition: left 2s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 10px 5px rgba(0,0,0,0.5));
+            cursor: pointer;
+        }
+
+        .sway { animation: swayAnim 4s infinite ease-in-out; }
+        @keyframes swayAnim {
+            0%, 100% { transform: rotate(-5deg) translateY(0); }
+            50% { transform: rotate(5deg) translateY(-15px); }
+        }
+
+        .floaty {
+            position: fixed;
+            z-index: 15;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .floaty:hover { transform: scale(1.2); }
+
+        #start-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .btn-gold {
+            background: var(--p-gold);
+            color: var(--p-brown);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: bold;
+            border: 4px solid var(--p-brown);
+            cursor: pointer;
+            box-shadow: 0 0 20px var(--p-gold);
+        }
+
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-10px, 5px); }
+            40% { transform: translate(10px, -5px); }
+            60% { transform: translate(-10px, -5px); }
+            80% { transform: translate(10px, 5px); }
+        }
+
+        /* AI Parrot Styling */
+        #parrot-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .parrot-bubble {
+            background: white;
+            color: black;
+            padding: 10px;
+            border-radius: 15px;
+            border: 2px solid #3e2723;
+            max-width: 200px;
+            font-size: 12px;
+            margin-bottom: 5px;
+            display: none;
+            position: relative;
+        }
+        .parrot-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center">
+
+    <!-- AI Papegoja -->
+    <div id="parrot-container">
+        <div id="parrot-speech" class="parrot-bubble">Krrra! Behöver du hjälp med grammatiken?</div>
+        <div class="text-6xl cursor-pointer hover:scale-110 transition-transform" onclick="askParrot()">🦜</div>
+        <button onclick="askParrot()" class="mt-2 bg-amber-600 text-white text-[10px] px-2 py-1 rounded-full border border-amber-900 shadow-lg">✨ Fråga Papegojan</button>
+    </div>
+
+    <div id="start-overlay">
+        <div class="mb-10 px-4">
+            <span class="text-9xl block mb-6">🏴‍☠️</span>
+            <h2 class="text-6xl text-white uppercase tracking-widest mb-4">The Black Pearl AI</h2>
+            <p class="text-xl text-amber-200">Nu med ✨ Magisk Papegoja ✨ som kan prata!</p>
+        </div>
+        <button onclick="startGame()" class="btn-gold">⚔️ STARTA ÄVENTYRET ⚔️</button>
+    </div>
+
+    <div id="objects-layer">
+        <div class="floaty text-4xl" style="top: 15%; left: 10%;" onclick="makeThunder()">☁️</div>
+        <div class="floaty text-5xl" style="bottom: 50px; left: 20%;" onclick="clickObject('Du hittade rom! 🍾')">🍾</div>
+    </div>
+
+    <div class="ocean"><div class="wave"></div></div>
+    <div id="main-ship" class="ship sway">🚢</div>
+
+    <div id="game-panel" class="parchment max-w-lg w-full p-6 relative z-20 m-4 hidden">
+        <div class="text-center mb-4">
+            <div id="skull" class="text-7xl mb-2">💀</div>
+            <h1 class="text-4xl uppercase text-amber-900">Kaptenens Prövning</h1>
+            <div class="mt-4 bg-amber-900/20 h-4 rounded-full overflow-hidden border-2 border-amber-900/30">
+                <div id="progress" class="bg-amber-600 h-full w-0 transition-all duration-1000"></div>
+            </div>
+            <p id="stats" class="text-xs font-bold mt-2">Poäng: 0 | Plats: Tortuga</p>
+        </div>
+        <div id="quiz-box">
+            <p id="story" class="text-center italic mb-6 font-bold"></p>
+            <div id="options-area" class="space-y-4">
+                <div class="bg-black/5 p-4 rounded-lg">
+                    <p id="q1-title" class="text-xs font-bold mb-2 uppercase"></p>
+                    <div id="q1-btns" class="grid grid-cols-2 gap-2"></div>
+                </div>
+                <div class="bg-black/5 p-4 rounded-lg">
+                    <p id="q2-title" class="text-xs font-bold mb-2 uppercase"></p>
+                    <div id="q2-btns" class="grid grid-cols-1 gap-2"></div>
+                </div>
+            </div>
+        </div>
+        <div id="feedback" class="h-8 text-center mt-6 text-sm font-black uppercase"></div>
+        <button id="action-btn" class="w-full bg-amber-950 text-amber-100 py-4 rounded-xl mt-4 font-bold uppercase text-xl border-b-8 border-black active:border-b-2 active:translate-y-1 transition-all">Kontrollera</button>
+    </div>
+
+    <script>
+        const apiKey = ""; // Gemini API Key
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playBeep(freq, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sounds = {
+            correct: () => { playBeep(523, 'triangle', 0.2); setTimeout(()=>playBeep(659,'triangle',0.2),100); },
+            wrong: () => playBeep(110, 'sawtooth', 0.5),
+            click: () => playBeep(800, 'sine', 0.05),
+            thunder: () => playBeep(60, 'sawtooth', 1.0)
+        };
+
+        const challenges = [
+            { loc: "Tortuga", s: "Hitta verbet i 'Piraten äter guld'.", q1: "Hitta verbet:", o1: ["Piraten", "äter", "guld"], a1: "äter", q2: "Synonym till glad:", o2: ["Surt", "Lycklig", "Arg"], a2: 1 },
+            { loc: "Isla de Muerta", s: "Hitta adjektivet i 'Det gamla skeppet'.", q1: "Adjektiv:", o1: ["Det", "gamla", "skeppet"], a1: "gamla", q2: "Vad är en koja?", o2: ["Ett litet hus", "Ett skepp", "En fisk"], a2: 0 },
+            { loc: "De sju haven", s: "Hitta substantivet i 'Vågen är blå'.", q1: "Substantiv:", o1: ["Vågen", "är", "blå"], a1: "Vågen", q2: "Motsats till stor:", o2: ["Liten", "Gammal", "Hård"], a2: 0 }
+        ];
+
+        let cur = 0, score = 0, s1 = null, s2 = null, parrotLoading = false;
+
+        function startGame() {
+            audioCtx.resume();
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('game-panel').style.display = 'block';
+            loadLevel();
+        }
+
+        function loadLevel() {
+            if(cur >= challenges.length) { 
+                generateVictoryMessage(); 
+                return; 
+            }
+            const d = challenges[cur];
+            document.getElementById('skull').innerText = "💀";
+            document.getElementById('story').innerText = d.s;
+            document.getElementById('stats').innerText = `Poäng: ${score} | Plats: ${d.loc}`;
+            document.getElementById('progress').style.width = (cur/challenges.length*100) + "%";
+            document.getElementById('action-btn').innerText = "Kontrollera Svar";
+            document.getElementById('feedback').innerText = "";
+            s1 = null; s2 = null;
+            renderBtns('q1-btns', d.o1, (v)=>s1=v);
+            renderBtns('q2-btns', d.o2, (v,i)=>s2=i);
+        }
+
+        function renderBtns(id, opts, cb) {
+            const el = document.getElementById(id); el.innerHTML = '';
+            opts.forEach((o, i) => {
+                const b = document.createElement('button');
+                b.innerText = o; b.className = "bg-white/70 p-3 rounded-lg border-2 border-amber-900/40 font-bold hover:bg-amber-100 transition-colors";
+                b.onclick = () => { sounds.click(); Array.from(el.children).forEach(x=>x.classList.remove('bg-amber-950','text-white')); b.classList.add('bg-amber-950','text-white'); cb(o,i); };
+                el.appendChild(b);
+            });
+        }
+
+        // --- GEMINI API INTEGRATION ---
+        
+        async function callGemini(prompt, systemInstruction = "") {
+            let retries = 5;
+            let delay = 1000;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            while (retries > 0) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: systemInstruction }] }
+                        })
+                    });
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Krrra! Jag tappade rösten!";
+                } catch (err) {
+                    retries--;
+                    if (retries === 0) return "Krrra! Skeppet sjunker (anslutningsfel)!";
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        async function askParrot() {
+            if (parrotLoading) return;
+            parrotLoading = true;
+            const speech = document.getElementById('parrot-speech');
+            speech.innerText = "Krrra... funderar... ✨";
+            speech.style.display = "block";
+
+            const d = challenges[cur];
+            const prompt = `Ge en pedagogisk men rolig pirat-ledtråd till den här frågan: "${d.s}". Säg inte svaret direkt!`;
+            const systemPrompt = "Du är en rolig piratpapegoja som pratar svenska. Du börjar varje mening med 'Krrra!' eller 'Skepp ohoj!'. Du älskar grammatik och att hjälpa elever.";
+
+            const hint = await callGemini(prompt, systemPrompt);
+            speech.innerText = hint;
+            parrotLoading = false;
+            
+            setTimeout(() => { speech.style.display = "none"; }, 15000);
+        }
+
+        async function generateVictoryMessage() {
+            const container = document.getElementById('quiz-box');
+            container.innerHTML = "<p class='text-center animate-pulse'>✨ Magiskt meddelande från kaptenen dyker upp...</p>";
+            
+            const prompt = `Eleven har klarat piratäventyret med ${score} poäng. Skriv ett personligt, uppmuntrande och heroiskt hyllningsmeddelande på svenska i piratstil.`;
+            const message = await callGemini(prompt, "Du är Kapten Svartskägg, en tuff men rättvis piratkapten.");
+            
+            container.innerHTML = `<div class='text-center p-4'><h2 class='text-3xl mb-4'>VINST! 👑</h2><p class='italic'>${message}</p></div>`;
+            document.getElementById('action-btn').innerText = "STARTA OM";
+            document.getElementById('action-btn').onclick = () => location.reload();
+        }
+
+        // --- KLASSISKA FUNKTIONER ---
+
+        document.getElementById('action-btn').onclick = function() {
+            if(this.innerText === "NÄSTA Ö 🌊") { cur++; loadLevel(); moveShip(); return; }
+            if(s1 === null || s2 === null) return;
+            const d = challenges[cur];
+            if(s1 === d.a1 && s2 === d.a2) {
+                sounds.correct(); score += 10;
+                document.getElementById('feedback').innerText = "RÄTT! BRA JOBBAT!"; 
+                document.getElementById('feedback').style.color = "green";
+                this.innerText = "NÄSTA Ö 🌊";
+            } else {
+                sounds.wrong(); document.getElementById('feedback').innerText = "FEL! FÖRSÖK IGEN!";
+                document.getElementById('feedback').style.color = "red";
+                document.getElementById('game-panel').classList.add('shake');
+                setTimeout(()=>document.getElementById('game-panel').classList.remove('shake'), 500);
+            }
+        };
+
+        function moveShip() { document.getElementById('main-ship').style.left = (5 + (cur * 20)) + "vw"; }
+        function makeThunder() { sounds.thunder(); document.body.style.background = 'white'; setTimeout(()=>document.body.style.background = '', 50); }
+        function clickObject(m) { sounds.click(); score++; document.getElementById('stats').innerText = `Poäng: ${score}`; }
+        function clickShip() { sounds.click(); }
+    </script>
+</body>
+</html>
